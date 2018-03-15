@@ -18,5 +18,23 @@ object Game {
   def shuffle = {
     scala.util.Random.shuffle(deck)
   }
+  
+  val players: Buffer[Player] = Buffer()
+  val board: Buffer[Card] = Buffer()
+  
+  
+  
+  def deal() = {
+    for(i <- 0 until 2){
+    players += new Player(deck.take(4))
+    deck.remove(4)
+    }
+    board ++ deck.take(4)
+    deck.remove(4)
+  }
+  
+  
+  
+  
 }
 
