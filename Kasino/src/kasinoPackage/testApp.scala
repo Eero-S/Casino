@@ -1,4 +1,5 @@
 package kasinoPackage
+import scala.io.StdIn.{readLine,readInt}
 
 object testApp extends App {
   Game.createDeck
@@ -27,5 +28,7 @@ object testApp extends App {
     println( p2.inspectAction(p1.hand(i)) + " - " + p2.hand(i).toString() )
   }
   
+ 
   
+  p1.play()
 }

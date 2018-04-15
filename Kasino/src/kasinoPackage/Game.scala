@@ -22,7 +22,7 @@ object Game {
   val board = new Board(Buffer())
  
   def fillBoard() = {
-    while(board.cards.size < 6){
+    while(board.cards.size < 11){
     board.cards += deck.head
     deck.remove(0, 1)
     }
