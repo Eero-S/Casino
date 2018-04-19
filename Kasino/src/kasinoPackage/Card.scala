@@ -1,5 +1,5 @@
 package kasinoPackage
 
-class Card(val valueHand: Int, val valueTable: Int, val suit: String, val name: String) {
+class Card(val valueHand: Int, val valueTable: Int, val suit: String, val name: String, val points: Int) {
   override def toString = name + "-" + suit
 }
