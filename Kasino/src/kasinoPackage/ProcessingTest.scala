@@ -3,75 +3,139 @@ import processing.core._
 import scala.collection.mutable.Buffer
 
 class ProcessingTest extends PApplet {
-
   override def settings() = {
     size(1024, 768)
   }
 
-  def overRect(x: Int, y: Int, width: Int, height: Int): Boolean = {
-    if (mouseX >= x && mouseX <= x + width &&
-      mouseY >= y && mouseY <= y + height) {
+  val game = Game
+  var state = 0
+
+  def overRect(x: Float, y: Float, width: Float, height: Float): Boolean = {
+    if (mouseX > (x - width / 2F) && mouseX < (x + width / 2F) && mouseY > (y - height / 2F) && mouseY < (y + height / 2F)) {
       true;
     } else {
       false;
     }
   }
 
-  class Button(text: String) {
+  class Button(val text: String) {
 
   }
 
   override def draw() = {
-   /* if (mousePressed && overRect(250, 250, 50, 50)) {
-      fill(0);
+    val Bwidth = width / 3F
+    val Bheight = height / 7F
+    val Bx = width / 2F
 
-    } else {
-      fill(126);
+    state match {
+      case 0 => stateMenu()
+      case 1 => stateCreatePlayers()
+      case 2 => stateGame()
     }
-    * 
-    */
 
-    rectMode(PConstants.CENTER)
-    var buttons = Buffer[Button]()
-    buttons += new Button("Play")
-    buttons += new Button("Pla")
-    buttons += new Button("Pl")
-    for(i <- buttons.indices){
-      val x = width / 2
-      val H = height/buttons.length
-      val y = i*H
-      val w = width / 3
-      val h = height / 7
-      
-      rect(x,y,w,h)
+    def stateMenu() = {
+      background(255, 250, 250)
+      textAlign(PConstants.CENTER, PConstants.CENTER)
+      rectMode(PConstants.CENTER)
+      val buttons = Buffer[Button]()
+
+      buttons += new Button("Play")
+      buttons += new Button("Exit")
+
+      for (i <- buttons.indices) {
+        val x = Bx
+        val y = 200 + (i) * 150
+        val w = Bwidth
+        val h = Bheight
+        textSize(45);
+
+        text(buttons(i).text, x, y, w, h)
+        if (overRect(x, y, w, h)) {
+          fill(0)
+          stroke(220, 220, 220)
+          strokeWeight(3)
+          rect(x, y, w, h)
+          fill(220, 220, 220)
+          text(buttons(i).text, x, y, w, h)
+          if (mousePressed && i == 0) {
+            state = 1
+            println(state)
+          } else if (mousePressed) {
+            exit()
+          }
+
+        } else {
+          fill(0)
+          stroke(31, 41, 71)
+          strokeWeight(2)
+          rect(x, y, w, h)
+          fill(220, 220, 220)
+          text(buttons(i).text, x, y, w, h)
+        }
+      }
     }
+
+    def stateCreatePlayers() = {
+      background(255, 250, 250)
+      textAlign(PConstants.CENTER, PConstants.CENTER)
+      rectMode(PConstants.CENTER)
+
+      val buttons = Buffer[Button]()
+      buttons += new Button("1")
+      buttons += new Button("2")
+      buttons += new Button("3")
+      buttons += new Button("4")
+
+      for (i <- buttons.indices) {
+        val x = Bx
+        val y = 200 + (i) * 150
+        val w = Bwidth
+        val h = Bheight
+        textSize(45);
+
+        text(buttons(i).text, x, y, w, h)
+        if (overRect(x, y, w, h)) {
+          fill(0)
+          stroke(220, 220, 220)
+          strokeWeight(3)
+          rect(x, y, w, h)
+          fill(220, 220, 220)
+          text(buttons(i).text, x, y, w, h)
+          if (mousePressed) {
+            val n = i + 1
+           // game.createPlayers(n)
+            state = 2
+          }
+
+        } else {
+          fill(0)
+          stroke(31, 41, 71)
+          strokeWeight(2)
+          rect(x, y, w, h)
+          fill(220, 220, 220)
+          text(buttons(i).text, x, y, w, h)
+        }
+      }
+    }
+
+    def stateGame() = {
+      background(220, 220, 220)
+      fill(0, 100, 0)
+      stroke(139, 69, 19)
+      strokeWeight(4)
+      ellipse(width / 2F, height / 3F, 860, 470)
+
+    }
+
   }
 
-  /*override def draw() = {
-    background(220,220,220)
-    var stage = 0
-    if(stage == 0){
-
-    } else {
-
-
-
-    fill(0, 100, 0);
-    ellipse(width / 2, height / 2, 850, 400);
-    }
-
-  }
-  *
-  */
 }
 
 object ProcessingTest extends App {
   PApplet.main("kasinoPackage.ProcessingTest")
 }
 
-trait view
-case object menu extends view
-case object kasino extends view
+
 
 
 

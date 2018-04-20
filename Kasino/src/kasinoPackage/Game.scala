@@ -37,17 +37,14 @@ object Game {
     this.fillBoard()
   }
 
-  def createPlayers = {
-    println("How many players?")
-    val numberOfPlayers = readInt()
-    println("Nice, we created " + numberOfPlayers + " players!")
-    println("What are the names of the players?")
+  def createPlayers(n: Int) = {
+
     val names = Buffer[String]()
-    for (i <- 0 until numberOfPlayers) {
+    for (i <- 0 until n) {
       println("Name of player " + (i + 1) + "?")
       names += readLine()
     }
-    for (i <- 0 until numberOfPlayers) {
+    for (i <- 0 until n) {
       players += new Player(Buffer(), board, names(i))
     }
     this.welcomeMsg
@@ -64,10 +61,7 @@ object Game {
   }
 
   // Helpers
-  
- 
-  
-  
+
   private def shuffle = {
     deck = scala.util.Random.shuffle(deck)
   }
