@@ -7,6 +7,9 @@ class ProcessingTest extends PApplet {
     size(1024, 768)
   }
 
+  override def setup() = {
+  }
+
   val game = Game
   var state = 0
 
@@ -18,7 +21,8 @@ class ProcessingTest extends PApplet {
     }
   }
 
-  class Button(val text: String) {
+  class Button(val text: String, go: => Unit) {
+    def getGo = go
 
   }
 
@@ -26,96 +30,26 @@ class ProcessingTest extends PApplet {
     val Bwidth = width / 3F
     val Bheight = height / 7F
     val Bx = width / 2F
+    val yBase = height / 3F
+    val yMargin = 150
 
     state match {
       case 0 => stateMenu()
-      case 1 => stateCreatePlayers()
-      case 2 => stateGame()
+      case 1 => stateGame()
     }
 
     def stateMenu() = {
       background(255, 250, 250)
       textAlign(PConstants.CENTER, PConstants.CENTER)
       rectMode(PConstants.CENTER)
-      val buttons = Buffer[Button]()
-
-      buttons += new Button("Play")
-      buttons += new Button("Exit")
-
-      for (i <- buttons.indices) {
-        val x = Bx
-        val y = 200 + (i) * 150
-        val w = Bwidth
-        val h = Bheight
-        textSize(45);
-
-        text(buttons(i).text, x, y, w, h)
-        if (overRect(x, y, w, h)) {
-          fill(0)
-          stroke(220, 220, 220)
-          strokeWeight(3)
-          rect(x, y, w, h)
-          fill(220, 220, 220)
-          text(buttons(i).text, x, y, w, h)
-          if (mousePressed && i == 0) {
-            state = 1
-            println(state)
-          } else if (mousePressed) {
-            exit()
-          }
-
-        } else {
-          fill(0)
-          stroke(31, 41, 71)
-          strokeWeight(2)
-          rect(x, y, w, h)
-          fill(220, 220, 220)
-          text(buttons(i).text, x, y, w, h)
-        }
-      }
-    }
-
-    def stateCreatePlayers() = {
-      background(255, 250, 250)
-      textAlign(PConstants.CENTER, PConstants.CENTER)
-      rectMode(PConstants.CENTER)
+      textSize(46);
 
       val buttons = Buffer[Button]()
-      buttons += new Button("1")
-      buttons += new Button("2")
-      buttons += new Button("3")
-      buttons += new Button("4")
+      buttons += new Button("Play", state = 1)
+      buttons += new Button("Exit", exit())
 
-      for (i <- buttons.indices) {
-        val x = Bx
-        val y = 200 + (i) * 150
-        val w = Bwidth
-        val h = Bheight
-        textSize(45);
+      buttonBuilder(buttons)
 
-        text(buttons(i).text, x, y, w, h)
-        if (overRect(x, y, w, h)) {
-          fill(0)
-          stroke(220, 220, 220)
-          strokeWeight(3)
-          rect(x, y, w, h)
-          fill(220, 220, 220)
-          text(buttons(i).text, x, y, w, h)
-          if (mousePressed) {
-            val n = i + 1
-           // game.createPlayers(n)
-            state = 2
-          }
-
-        } else {
-          fill(0)
-          stroke(31, 41, 71)
-          strokeWeight(2)
-          rect(x, y, w, h)
-          fill(220, 220, 220)
-          text(buttons(i).text, x, y, w, h)
-        }
-      }
     }
 
     def stateGame() = {
@@ -124,11 +58,38 @@ class ProcessingTest extends PApplet {
       stroke(139, 69, 19)
       strokeWeight(4)
       ellipse(width / 2F, height / 3F, 860, 470)
+    }
 
+    // Helper for building buttons
+    def buttonBuilder(btns: Buffer[Button]) = {
+      for (i <- btns.indices) {
+        // Coordinates & size
+        val x = Bx
+        val y = yBase + (i) * yMargin
+        val w = Bwidth
+        val h = Bheight
+
+        // Rectangle & text
+        stroke(0)
+        strokeWeight(3)
+        fill(220, 220, 220)
+        rect(x, y, w, h)
+        fill(0)
+        text(btns(i).text, x, y, w, h)
+
+        if (overRect(x, y, w, h)) {
+          rect(x, y, w, h)
+          fill(220, 220, 220)
+          text(btns(i).text, x, y, w, h)
+          if (mousePressed) {
+            btns(i).getGo
+          }
+        }
+
+      }
     }
 
   }
-
 }
 
 object ProcessingTest extends App {

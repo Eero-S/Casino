@@ -5,64 +5,153 @@ import scala.io.StdIn._
 class Player(var hand: Buffer[Card], val board: Board, val name: String) {
   require((hand.size <= 4 && hand.size >= 0), "Wrong hand size")
 
-  override def toString = hand.mkString(", ")
+  override def toString = name + " " + hand.mkString(", ")
 
+  // The cards a player has collected during each round.
   val collected: Buffer[Card] = Buffer()
+  // Points a player has collected in the game.
   var points = 0
 
-  def inspectAction(target: Card): Option[Seq[Seq[Card]]] = {
+  // Methods for counting points.
+  def calcPointCards = collected.map(_.points).sum
+  def calcSpades = collected.filter(_.suit == "Spades").length
+  def calcLength = collected.size
+
+  // Helper method that tell what kind of sets can be taken from the board with a certain hand card.
+  def inspectSets(target: Card): Option[Seq[Seq[Card]]] = {
     val board = this.board.cards
     val targ = target.valueHand
     val sopivat = board.filter(_.valueTable <= targ).toSet
     val cards = sopivat.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == targ).distinct
     if (cards.isEmpty) None
     else Option(cards)
-
   }
 
-  def chooseAction() {
-    println("card?")
-    val fromHand = readInt()
-    require(fromHand > 0 && fromHand < 4)
+  /* Checks if it is 'legal' to make the play.
+   * @param card				The card to be played.
+   * @param candidates 	The cards to be taken.
+   */
+  def legality(target: Card, candidates: Seq[Card]): Boolean = {
+    val smaller = candidates.filter(_.valueTable < target.valueHand) //  Cards that are smaller than target card.
+    val subs = smaller.toSet.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == target.valueHand).distinct // subsets that equal the target.
 
-    val card = this.hand(fromHand)
-    val tableCards = inspectAction(card)
-
-    if (tableCards.isEmpty) {
-      println("you got nothing")
-      board.add(card)
+    if (inspectSets(target).isEmpty) { // If there are no subsets that equal target cards value, there is no legal plays.
+      false
+    } else if (candidates.exists(_.valueTable > target.valueHand)) { // Can not take bigger cards.
+      false
+    } else if (smaller.isEmpty) { // if smaller is empty, then all candidate cards must equal the target card (there are no bigger nor smaller cards).
+      true
+    } else if (!smaller.forall(subs.flatten.contains(_)) || subs.isEmpty) { // Check if subs contains each card from smaller.
+      false
     } else {
-      val sets = tableCards.get.toSeq
-
-      if (sets.length == 1) {
-        collect(sets.head)
-      } else {
-        println("index of the set?")
-        val indexOfset = readInt()
-        val cards = sets(indexOfset)
-        println((cards).mkString(", "))
-        collect(cards)
-      }
-
+      legalityHelper(smaller, target.valueHand)
     }
-    removeFromHand(card)
+  }
+
+  /* Checks recursively if it is legal to take the candidate cards.
+   * @param a 				Candidate cards that are smaller than the target.
+   * @param targ			The hand value of the target card.
+   */
+  def legalityHelper(a: Seq[Card], targ: Int): Boolean = {
+    require(a.forall(_.valueTable < targ), "Cards are too big")
+    val subs = a.toSet.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == targ).distinct // subsets that equal the target.
+    val allThere = a.forall(subs.flatten.contains(_)) // Checks if every candidate is being used in the subsets.
+
+    if (a.isEmpty) { // If a is empty, all possible subsets have been tested.
+      true
+    } else if (!allThere) {
+      false
+    } else {
+      /* Removes every subset one by one, and recursively test if there are any combinations where it is legal to play these cards.
+      *  Only one legal combination is needed to prove that it is legal to take candidates. */
+      var any = false
+      for (i <- subs.indices) {
+        val newSet = a.toSet -- subs(i)
+        val b = legalityHelper(newSet.toSeq, targ)
+        if (b) any = true
+      }
+      any
+    }
+  }
+
+  // The method that lets players choose what to play, and what to take from the board.
+  def chooseAction() {
+    println("Which card you want to play?")
+    val fromHand = readInt()
+    require(fromHand >= 0 && fromHand < 4)
+    val card = this.hand(fromHand)
+
+    println("how many cards you want to take from the board?")
+    val n = readInt()
+    val cardsToTake = Buffer[Card]()
+    for (i <- 0 until n) {
+      println("card int from table?")
+      val a = readInt()
+      cardsToTake += Game.board.cards(a)
+    }
+    val legal = this.legality(this.hand(fromHand), cardsToTake.toSeq)
+    if (legal) {
+      this.removeFromHand(card)
+      if (!cardsToTake.isEmpty) {
+        this.collect(cardsToTake)
+      }
+      println("You played " + card)
+    } else {
+      println("You can't take those, please try again.")
+    }
 
   }
 
-  def bestMove = {    
-
-    var m: Map[Int, Seq[Seq[Card]]] = Map()
-
-    for (i <- 0 until hand.length) {
-      val x = this.inspectAction(hand(i))
-
-      if (!x.isEmpty) {
-        val a = x.get.filter(b => b.map(_.points).sum == x.get.maxBy(_.map(_.points).sum).map(_.points).sum) // Most points per card
-        m = m ++ Map(i -> a)
-      }
+  def bestValue = {    
+    val h = this.hand
+    var options = Map[Card, Option[Set[Card]]]()
+    for (i <- h.indices) {
+      val a = asd(h(i))
+      options = options ++ Map(h(i) -> a)
     }
-    println(m)
+    options
+  }
 
+  def asd(card: Card) = {
+    val sets = inspectSets(card)
+    if (sets.isEmpty) {
+      None
+    } else {
+      val g = sets.get
+      val a = g.flatten.toSet
+      val r = bestFromSets(a, card.valueHand, Set())
+      Some(r)
+    }
+  }
+
+  // Returns the set with best value.
+  def bestFromSets(cards: Set[Card], targ: Int, currentSet: Set[Card]): Set[Card] = {
+    val subs = cards.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == targ).distinct
+    if (subs.isEmpty) {
+      currentSet
+    } else {
+      var old = currentSet
+      for (i <- subs.indices) {
+        val eka = subs(i).toSet
+        val uudet = cards -- eka
+        val n = bestFromSets(uudet, targ, currentSet ++ eka)
+        val pointsOld = old.map(_.points).sum
+        val pointsNew = n.map(_.points).sum
+        val oldLength = old.size
+        val newLength = n.size
+        val oldSpades = old.map(_.suit == "Spades").size
+        val newSpades = n.map(_.suit == "Spades").size
+
+        if (pointsNew > pointsOld) {
+          old = n
+        } else if (pointsNew == pointsOld) {
+          if (newLength > oldLength || newSpades > oldSpades) {
+            old = n
+          }
+        }
+      }
+      old
+    }
   }
 
   private def collect(cards: Seq[Card]) = {
@@ -73,9 +162,5 @@ class Player(var hand: Buffer[Card], val board: Board, val name: String) {
   private def removeFromHand(card: Card) = {
     hand -= card
   }
-
-  def calcPointCards = collected.map(_.points).sum
-  def calcSpades = collected.filter(_.suit == "Spades").length
-  def calcLength = collected.size
 
 }

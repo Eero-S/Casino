@@ -8,6 +8,7 @@ object Game {
   val board = new Board(Buffer())
   val players: Buffer[Player] = Buffer()
 
+  // Creates the desired deck, thats suits the rules of the game. Also shuffles, and fills the board.
   def createDeck = {
     val ranks = Vector("A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K")
     for (i <- 1 to 13) {
@@ -33,23 +34,21 @@ object Game {
         deck += new Card(i, i, "Spades", ranks(i - 1), 0)
       }
     }
-    this.shuffle
+    this.shuffle()
     this.fillBoard()
   }
 
+  // Creates n amount of players, also asking the names of each player.
   def createPlayers(n: Int) = {
-
-    val names = Buffer[String]()
     for (i <- 0 until n) {
       println("Name of player " + (i + 1) + "?")
-      names += readLine()
+      val name = readLine()
+      players += new Player(Buffer(), board, name)
     }
-    for (i <- 0 until n) {
-      players += new Player(Buffer(), board, names(i))
-    }
-    this.welcomeMsg
+    this.welcomeMsg()
   }
 
+  // Fill every hand.
   def fillHands() = {
     while (players.exists(_.hand.length < 4)) {
       for (i <- 0 until players.length) {
@@ -62,20 +61,22 @@ object Game {
 
   // Helpers
 
-  private def shuffle = {
+  private def shuffle() = {
     deck = scala.util.Random.shuffle(deck)
   }
+
   private def fillBoard() = {
-    while (board.cards.size < 4) {
+    val boardSize = 6
+    while (board.cards.size < boardSize) {
       board.cards += deck.head
       deck.remove(0, 1)
     }
   }
-  private def welcomeMsg = {
+
+  private def welcomeMsg() = {
     val names = players.map(_.name)
     if (players.size == 1) println("Welcome " + names.head)
     else println("Welcome " + names.init.mkString(", ") + " and " + names.last)
-
   }
 
 }
