@@ -2,10 +2,14 @@ package kasinoPackage
 import scala.collection.mutable.Buffer
 import scala.io.StdIn._
 
+// Represents the player objects in the game.
 class Player(var hand: Buffer[Card], val board: Board, val name: String) {
+
   require((hand.size <= 4 && hand.size >= 0), "Wrong hand size")
 
   override def toString = name + " " + hand.mkString(", ")
+  def isBot = false
+  def play: Unit = println("not a bot") 
 
   // The cards a player has collected during each round.
   val collected: Buffer[Card] = Buffer()
@@ -16,8 +20,11 @@ class Player(var hand: Buffer[Card], val board: Board, val name: String) {
   def calcPointCards = collected.map(_.points).sum
   def calcSpades = collected.filter(_.suit == "Spades").length
   def calcLength = collected.size
+  def winSpades = points += 2
+  def winSize = points += 1
+  def addPointCards = points += calcPointCards
 
-  // Helper method that tell what kind of sets can be taken from the board with a certain hand card.
+  // Helper method that tells what kind of sets can be taken from the board with a certain card.
   def inspectSets(target: Card): Option[Seq[Seq[Card]]] = {
     val board = this.board.cards
     val targ = target.valueHand
@@ -25,6 +32,32 @@ class Player(var hand: Buffer[Card], val board: Board, val name: String) {
     val cards = sopivat.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == targ).distinct
     if (cards.isEmpty) None
     else Option(cards)
+  }
+
+  /* Checks recursively if it is legal to take the candidate cards.
+   * @param acandidates		Candidate cards that are smaller than the target.
+   * @param targ					The hand value of the target card.
+   */
+  def legalityHelper(candidates: Seq[Card], targ: Int): Boolean = {
+    require(candidates.forall(_.valueTable < targ), "Cards are too big")
+    val subs = candidates.toSet.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == targ).distinct // subsets that equal the target.
+    val allThere = candidates.forall(subs.flatten.contains(_)) // Checks if every candidate is being used in the subsets.
+
+    if (candidates.isEmpty) { // If a is empty, all possible subsets have been tested.
+      true
+    } else if (!allThere) {
+      false
+    } else {
+      /* Removes every subset one by one, and recursively test if there are any combinations where it is legal to play these cards.
+      *  Only one legal combination is needed to prove that it is legal to take candidates. */
+      var any = false
+      for (i <- subs.indices) {
+        val newSet = candidates.toSet -- subs(i)
+        val b = legalityHelper(newSet.toSeq, targ)
+        if (b) any = true
+      }
+      any
+    }
   }
 
   /* Checks if it is 'legal' to make the play.
@@ -35,7 +68,9 @@ class Player(var hand: Buffer[Card], val board: Board, val name: String) {
     val smaller = candidates.filter(_.valueTable < target.valueHand) //  Cards that are smaller than target card.
     val subs = smaller.toSet.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == target.valueHand).distinct // subsets that equal the target.
 
-    if (inspectSets(target).isEmpty) { // If there are no subsets that equal target cards value, there is no legal plays.
+    if (candidates.isEmpty) {
+      true
+    } else if (inspectSets(target).isEmpty) { // If there are no subsets that equal target cards value, there is no legal plays.
       false
     } else if (candidates.exists(_.valueTable > target.valueHand)) { // Can not take bigger cards.
       false
@@ -48,118 +83,49 @@ class Player(var hand: Buffer[Card], val board: Board, val name: String) {
     }
   }
 
-  /* Checks recursively if it is legal to take the candidate cards.
-   * @param a 				Candidate cards that are smaller than the target.
-   * @param targ			The hand value of the target card.
+  /* The method that lets players choose what to play, and what to take from the board.
+   * If the play is legal, completes the play and returns true.
    */
-  def legalityHelper(a: Seq[Card], targ: Int): Boolean = {
-    require(a.forall(_.valueTable < targ), "Cards are too big")
-    val subs = a.toSet.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == targ).distinct // subsets that equal the target.
-    val allThere = a.forall(subs.flatten.contains(_)) // Checks if every candidate is being used in the subsets.
+  def chooseAction(fromHand: Card, fromTable: Buffer[Card]): Boolean = {
+    var r = true
+    if (this.legality(fromHand, fromTable)) {  
+      
+      this.removeFromHand(fromHand)
+      
+      if (!fromTable.isEmpty) {
+        val cardsToBeTaken: Buffer[Card] = fromTable ++ Buffer(fromHand)
+        this.collect(cardsToBeTaken)
 
-    if (a.isEmpty) { // If a is empty, all possible subsets have been tested.
-      true
-    } else if (!allThere) {
-      false
-    } else {
-      /* Removes every subset one by one, and recursively test if there are any combinations where it is legal to play these cards.
-      *  Only one legal combination is needed to prove that it is legal to take candidates. */
-      var any = false
-      for (i <- subs.indices) {
-        val newSet = a.toSet -- subs(i)
-        val b = legalityHelper(newSet.toSeq, targ)
-        if (b) any = true
-      }
-      any
-    }
-  }
-
-  // The method that lets players choose what to play, and what to take from the board.
-  def chooseAction() {
-    println("Which card you want to play?")
-    val fromHand = readInt()
-    require(fromHand >= 0 && fromHand < 4)
-    val card = this.hand(fromHand)
-
-    println("how many cards you want to take from the board?")
-    val n = readInt()
-    val cardsToTake = Buffer[Card]()
-    for (i <- 0 until n) {
-      println("card int from table?")
-      val a = readInt()
-      cardsToTake += Game.board.cards(a)
-    }
-    val legal = this.legality(this.hand(fromHand), cardsToTake.toSeq)
-    if (legal) {
-      this.removeFromHand(card)
-      if (!cardsToTake.isEmpty) {
-        this.collect(cardsToTake)
-      }
-      println("You played " + card)
-    } else {
-      println("You can't take those, please try again.")
-    }
-
-  }
-
-  def bestValue = {    
-    val h = this.hand
-    var options = Map[Card, Option[Set[Card]]]()
-    for (i <- h.indices) {
-      val a = asd(h(i))
-      options = options ++ Map(h(i) -> a)
-    }
-    options
-  }
-
-  def asd(card: Card) = {
-    val sets = inspectSets(card)
-    if (sets.isEmpty) {
-      None
-    } else {
-      val g = sets.get
-      val a = g.flatten.toSet
-      val r = bestFromSets(a, card.valueHand, Set())
-      Some(r)
-    }
-  }
-
-  // Returns the set with best value.
-  def bestFromSets(cards: Set[Card], targ: Int, currentSet: Set[Card]): Set[Card] = {
-    val subs = cards.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == targ).distinct
-    if (subs.isEmpty) {
-      currentSet
-    } else {
-      var old = currentSet
-      for (i <- subs.indices) {
-        val eka = subs(i).toSet
-        val uudet = cards -- eka
-        val n = bestFromSets(uudet, targ, currentSet ++ eka)
-        val pointsOld = old.map(_.points).sum
-        val pointsNew = n.map(_.points).sum
-        val oldLength = old.size
-        val newLength = n.size
-        val oldSpades = old.map(_.suit == "Spades").size
-        val newSpades = n.map(_.suit == "Spades").size
-
-        if (pointsNew > pointsOld) {
-          old = n
-        } else if (pointsNew == pointsOld) {
-          if (newLength > oldLength || newSpades > oldSpades) {
-            old = n
-          }
+        // Mökki
+        if (this.board.cards.isEmpty) {
+          points += 1
         }
+        
+      } else {
+        board.add(fromHand)  // If not able to take any cards, put card to table.
       }
-      old
+    } else {
+      r = false
     }
+    r
+  }
+  
+  def resetAll(): Unit = {
+    resetRound()
+    this.points = 0
   }
 
-  private def collect(cards: Seq[Card]) = {
+  def resetRound(): Unit = {
+    this.collected.clear()
+    this.hand.clear()    
+  }
+
+  def collect(cards: Seq[Card]): Unit = {
     collected ++= cards
     board.take(cards)
   }
 
-  private def removeFromHand(card: Card) = {
+  private def removeFromHand(card: Card): Unit = {
     hand -= card
   }
 

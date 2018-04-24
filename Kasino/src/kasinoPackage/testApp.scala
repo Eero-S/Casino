@@ -3,26 +3,24 @@ import scala.io.StdIn.{ readLine, readInt }
 import scala.collection.mutable.Buffer
 
 object testApp extends App {
-  Game.createPlayers(2)
+  
   Game.createDeck
+  
+  Game.createBot(1)
+  Game.createPlayers(1, Buffer("a"))
+  Game.gameHandler()
+  
+  println(Game.deck.size)
 
-  Game.fillHands()
-  println("board: " + Game.board)
-
-  val p1 = Game.players.head
-  println(p1)
-  for (i <- p1.hand.indices) {
-    println(p1.inspectSets(p1.hand(i)))
-  }
-  val test = p1.bestValue
-  println("\n")
-  println(test)
+ 
+  
+  
 // p1.chooseAction()
   
   //println("board: " + Game.board)
   
 
-  val aceOfSpades = new Card(14, 1, "Spades", "A", 1)
+  /*val aceOfSpades = new Card(14, 1, "Spades", "A", 1)
   val twoOfSpades = new Card(2, 2, "Spades", "2", 0)
   val threeOfSpades = new Card(3, 3, "Spades", "3", 0)
   val fourOfSpades = new Card(4, 4, "Spades", "4", 0)
@@ -39,4 +37,6 @@ object testApp extends App {
   val s = a.cards
   val asd = s.filter(_.suit == "Spades")
   //  println(asd)
+   *  
+   */
 }
