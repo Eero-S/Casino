@@ -14,7 +14,9 @@ class tests extends PApplet {
   }
 
   override def draw() {
-
+    if (keyPressed) {
+      println(key.toInt)
+    }
   }
 
 }

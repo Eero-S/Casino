@@ -3,14 +3,14 @@ import scala.io.StdIn.{ readLine, readInt }
 import scala.collection.mutable.Buffer
 
 object testApp extends App {
+  val g = new Game
+  g.createDeck
   
-  Game.createDeck
+  g.createBot(1)
+  g.createPlayers(1, Buffer("a"))
+  g.gameHandler()
   
-  Game.createBot(1)
-  Game.createPlayers(1, Buffer("a"))
-  Game.gameHandler()
-  
-  println(Game.deck.size)
+  println(g.deck.size)
 
  
   

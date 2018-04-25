@@ -3,7 +3,7 @@ import scala.collection.mutable.Buffer
 import scala.io.StdIn._
 import scala.collection.mutable.Queue
 
-object Game {
+class Game {
 
   var turn = Queue[Player]()
   var lastTaken: Player = null
@@ -49,23 +49,23 @@ object Game {
 
   // Creates n amount of players, also asking the names of each player.
   def createPlayers(n: Int, names: Seq[String]) = {
-    require(names.size == n && n > 0, "createPlayers failed")
+    require(names.size == n && n > 0 && n < 5, "createPlayers failed")
     for (i <- 0 until n) {
-      players += new Player(Buffer(), board, names(i))
+      players.+=:(new Player(Buffer(), names(i), this)) 
     }
     fillHands()
     turn ++= players
     this.lastTaken = this.players.head
   }
-  
+
   // Doesn't work without players.
   def createBot(n: Int): Unit = {
     val bots = Buffer[Player]()
-    for(i <- 0 until n){
-      bots += new AI(Buffer(), board, "bot"+i)      
+    for (i <- 0 until n) {
+      bots += new AI(Buffer(), "bot" + i, this)
     }
     players ++= bots
-    turn ++= bots
+
   }
 
   def roundFinish() = {
@@ -75,14 +75,18 @@ object Game {
 
   }
 
-  def gameHandler(): Unit = {  
-      
-      this.fillHands()
-      this.rotateQueue()  
-      if(this.turn.head.isBot && !this.roundOver){
-        this.turn.head.play
-        this.gameHandler()
-      }
+  def botPlay() = {
+    if (this.turn.head.isBot) {
+      this.turn.head.play
+      this.gameHandler()
+    }
+  }
+
+  def gameHandler(): Unit = {
+
+    this.fillHands()
+    this.rotateQueue()
+    
   }
 
   // The dealing method - fills the hand of every player.
@@ -104,12 +108,12 @@ object Game {
     this.players.foreach(_.addPointCards)
   }
 
-   def resetGame(): Unit = {
+  def resetGame(): Unit = {
     this.players.foreach(_.resetAll)
     this.createDeck
     this.fillHands()
   }
-  
+
   // Resets everything for the next round.
   private def resetRound(): Unit = {
     this.players.foreach(_.resetRound)
@@ -135,4 +139,5 @@ object Game {
   }
 
 }
+
 

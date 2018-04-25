@@ -1,14 +1,16 @@
 package kasinoPackage
 import scala.collection.mutable.Buffer
 
-class AI(hand: Buffer[Card], board: Board, name: String) extends Player(hand, board, name) {
+class AI(hand: Buffer[Card], name: String, game: Game) extends Player(hand, name, game) {
 
   override def isBot = true
   
   override def play() = {
+    println(this.hand)
     val card = this.bestValue._1
     val set = this.bestValue._2.toBuffer
-    this.chooseAction(card, set)
+    val a = this.chooseAction(card, set)
+    println(a)
   }
   
   def bestValue: (Card, Set[Card]) = {    

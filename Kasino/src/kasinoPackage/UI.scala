@@ -4,7 +4,7 @@ import scala.collection.mutable.Buffer
 
 class UI extends PApplet {
   // Initiate game
-  val game = Game
+  val game = new Game
   game.createDeck
 
   override def settings() = {
@@ -45,6 +45,10 @@ class UI extends PApplet {
   var amountOfPlayers = 0
   var playerNames = Buffer[String]()
   var currentName = ""
+  var botAmount = 0
+  var botNtext = ""
+  var alertb = false
+  var alert2b = false
 
   def overRect(x: Float, y: Float, width: Float, height: Float): Boolean = {
     if (mouseX > (x - width / 2F) && mouseX < (x + width / 2F) && mouseY > (y - height / 2F) && mouseY < (y + height / 2F)) {
@@ -81,6 +85,29 @@ class UI extends PApplet {
           playerNtext = playerNtext + key
         }
       }
+    } else if (state == 7) {
+      if ((botNtext.size == 1 && key != 8 && key != 10)) {
+        alertb = true
+      } else if (!key.isDigit && key != 8 && key != 10) {
+        alert2b = true
+      } else {
+        if (key == 10) {
+          if (!botNtext.isEmpty()) {
+            botAmount = botNtext.toInt
+            state = 1
+            game.createBot(botAmount)
+          }
+        } else if (key == 8) {
+          if (botNtext.length != 0) {
+            botNtext = botNtext.init
+          }
+        } else if (key == 48) {
+          alert = true
+        } else {
+          botNtext = botNtext + key
+        }
+      }
+
     } else if (state == 2) {
       if (key == PConstants.ENTER) {
         playerNames += currentName
@@ -157,7 +184,7 @@ class UI extends PApplet {
       fill(0)
       text("Play card", bx, by, bw, bh)
       if (mousePressed && mouseButton == PConstants.LEFT) {
-        
+
         if (selectedHand.count(_ == true) == 1) {
           val fromBoard: Buffer[Card] = Buffer()
           val a = selectedBoard.zipWithIndex.filter(_._1 == true).map(_._2)
@@ -167,15 +194,9 @@ class UI extends PApplet {
           val asd = p.chooseAction(p.hand(selectedHand.indexOf(true)), fromBoard)
           selectedBoard = selectedBoard.map(a => false)
           selectedHand = selectedHand.map(a => false)
-          
+
           if (asd) {
-            
             game.gameHandler()
-            
-            if(!fromBoard.isEmpty){
-              game.lastTaken = p
-              println(game.lastTaken.name)
-            }
           }
 
         } else {
@@ -211,6 +232,22 @@ class UI extends PApplet {
     }
   }
 
+  override def mouseClicked() = {
+    if (state == 6) {
+      val x = width / 2
+      val y = height / 2
+      val y2 = height / 2 + 200
+      val w = 300
+      val h = 120
+
+      if (overRect(x, y, w, h)) {
+        state = 7
+      } else if (overRect(x, y2, w, h)) {
+        state = 1
+      }
+    }
+  }
+
   override def draw() = {
     val Bwidth = width / 3F
     val Bheight = height / 7F
@@ -225,18 +262,43 @@ class UI extends PApplet {
       case 3 => stateGame()
       case 4 => stateRoundOver()
       case 5 => stateGameOver()
+      case 6 => stateBots()
+      case 7 => stateBotAmount()
     }
-
+    // STATE 0
     def stateMenu() = {
       background(255, 250, 250)
       textAlign(PConstants.CENTER, PConstants.CENTER)
       rectMode(PConstants.CENTER)
       textSize(46);
       val buttons = Buffer[Button]()
-      buttons += new Button("Play", state = 1)
+      buttons += new Button("Play", state = 6)
       buttons += new Button("Exit", exit())
       buttonBuilder(buttons)
     }
+    // STATE 1
+    def stateAmountOfPlayers() = {
+      background(255)
+      textSize(31)
+      rectMode(PConstants.CENTER)
+      fill(0)
+      line(width / 2F - 20, 400, width / 2F + 20, 400)
+      text("Enter the number of players. Press ENTER to continue.", width / 2F, height / 3F, 600, 500);
+      text(playerNtext, width / 2F, 385)
+      textSize(21)
+      text("Must be between 1 and 5.", width / 2F + 170, 390)
+      if (alert) {
+        fill(255, 2, 2);
+        textSize(45)
+        text("You can only enter numbers from 1 to 5!", width / 2F, 633);
+      }
+      if (alert2) {
+        fill(255, 2, 2);
+        textSize(45)
+        text("You can only enter numbers!", width / 2F, 533);
+      }
+    }
+    // STATE 2
     def stateNamePlayers() = {
       if (playerNames.size == amountOfPlayers) {
         state += 1
@@ -253,29 +315,60 @@ class UI extends PApplet {
         text(currentName, width / 2F, 385)
       }
     }
+    // STATE 6
+    def stateBots() = {
+      background(255, 250, 250)
+      textAlign(PConstants.CENTER, PConstants.CENTER)
+      rectMode(PConstants.CENTER)
+      textSize(46);
+      fill(0)
+      text("Do you want to play with bots?", width / 2, 100)
 
-    def stateAmountOfPlayers() = {
+      val x = width / 2
+      val y = height / 2
+      val y2 = height / 2 + 200
+      val w = 300
+      val h = 120
+      fill(0)
+      stroke(0)
+      strokeWeight(3)
+      fill(220, 220, 220)
+      rect(x, y, w, h)
+      fill(0)
+      text("YES", x, y, w, h)
+      if (overRect(x, y, w, h)) {
+        rect(x, y, w, h)
+        fill(220, 220, 220)
+        text("YES", x, y, w, h)
+      }
+      fill(0)
+      stroke(0)
+      strokeWeight(3)
+      fill(220, 220, 220)
+      rect(x, y2, w, h)
+      fill(0)
+      text("NO", x, y2, w, h)
+      if (overRect(x, y2, w, h)) {
+        rect(x, y2, w, h)
+        fill(220, 220, 220)
+        text("NO", x, y2, w, h)
+      }
+
+    }
+    //STATE 7
+    def stateBotAmount() = {
       background(255)
       textSize(31)
       rectMode(PConstants.CENTER)
       fill(0)
       line(width / 2F - 20, 400, width / 2F + 20, 400)
-      text("Enter the number of players. Press ENTER to continue.", width / 2F, height / 3F, 600, 500);
-      text(playerNtext, width / 2F, 385)
+      text("Enter the number of bots. Press ENTER to continue.", width / 2F, height / 3F, 600, 500);
+      text(botNtext, width / 2F, 385)
       textSize(21)
-      text("Must be between 1 and 9.", width / 2F + 170, 390)
-      if (alert) {
-        fill(255, 2, 2);
-        textSize(45)
-        text("You can only enter numbers from 1 to 9!", width / 2F, 633);
-      }
-      if (alert2) {
-        fill(255, 2, 2);
-        textSize(45)
-        text("You can only enter numbers!", width / 2F, 533);
-      }
+      text("You can have a maximum of 3 bots", width / 2F + 370, 390)
     }
 
+    // STATE 3
     def stateGame() = {
       if (game.gameOver) {
         state = 5
@@ -284,6 +377,7 @@ class UI extends PApplet {
         game.roundFinish()
         state = 4
       }
+      game.botPlay()
       background(220, 220, 220)
       fill(0, 100, 0)
       stroke(139, 69, 19)
@@ -294,7 +388,7 @@ class UI extends PApplet {
       val nextPlayer = game.turn.head
       cardBuilderPlayer(nextPlayer, height / 2 - 30)
     }
-
+    // STATE 4
     def stateRoundOver() = {
       background(250)
       textSize(55)
@@ -308,7 +402,7 @@ class UI extends PApplet {
       }
       text("Hit space to continue to the next round.", width / 2, height - height / 4)
     }
-
+    // STATE 5
     def stateGameOver() = {
       val winner = game.winner
       background(0)
@@ -321,7 +415,7 @@ class UI extends PApplet {
       text("Hit space to start over", width / 2, height - height / 4)
     }
 
-    // Helper for building buttons
+    // Helper for building buttons.
     def buttonBuilder(btns: Buffer[Button]) = {
       for (i <- btns.indices) {
         // Coordinates & size
@@ -329,7 +423,7 @@ class UI extends PApplet {
         val y = yBase + (i) * yMargin
         val w = Bwidth
         val h = Bheight
-
+        // TODO copy to bots N
         // Rectangle & text
         stroke(0)
         strokeWeight(3)

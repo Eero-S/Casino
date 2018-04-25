@@ -3,11 +3,12 @@ import scala.collection.mutable.Buffer
 import scala.io.StdIn._
 
 // Represents the player objects in the game.
-class Player(var hand: Buffer[Card], val board: Board, val name: String) {
+class Player(var hand: Buffer[Card],  val name: String, val game: Game) {
+  val board = this.game.board
 
   require((hand.size <= 4 && hand.size >= 0), "Wrong hand size")
 
-  override def toString = name + " " + hand.mkString(", ")
+  override def toString = name
   def isBot = false
   def play: Unit = println("not a bot") 
 
@@ -95,6 +96,7 @@ class Player(var hand: Buffer[Card], val board: Board, val name: String) {
       if (!fromTable.isEmpty) {
         val cardsToBeTaken: Buffer[Card] = fromTable ++ Buffer(fromHand)
         this.collect(cardsToBeTaken)
+        this.game.lastTaken = this
 
         // Mökki
         if (this.board.cards.isEmpty) {
