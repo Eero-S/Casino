@@ -49,7 +49,7 @@ class Game {
 
   // Creates n amount of players, also asking the names of each player.
   def createPlayers(n: Int, names: Seq[String]) = {
-    require(names.size == n && n > 0 && n < 5, "createPlayers failed")
+    require(names.size == n && n > 0 && n <= 5, "createPlayers failed")
     for (i <- 0 until n) {
       players.+=:(new Player(Buffer(), names(i), this)) 
     }
@@ -60,6 +60,7 @@ class Game {
 
   // Doesn't work without players.
   def createBot(n: Int): Unit = {
+    require(n <= 3 && n>0, "Wrong amount of bots")
     val bots = Buffer[Player]()
     for (i <- 0 until n) {
       bots += new AI(Buffer(), "bot" + i, this)

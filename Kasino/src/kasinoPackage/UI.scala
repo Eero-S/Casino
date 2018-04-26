@@ -391,16 +391,16 @@ class UI extends PApplet {
     // STATE 4
     def stateRoundOver() = {
       background(250)
-      textSize(55)
+      textSize(45)
       textAlign(PConstants.CENTER)
       for (i <- 0 until game.players.size) {
         val x = width / 2
-        val y = height / 2 - i * 150
+        val y =  50 +  i * 80
         val input = "Player: " + game.players(i).name + "    Points: " + game.players(i).points
         fill(0)
         text(input, x, y)
       }
-      text("Hit space to continue to the next round.", width / 2, height - height / 4)
+      text("Hit space to continue to the next round.", width / 2, height - height / 4 + 100)
     }
     // STATE 5
     def stateGameOver() = {

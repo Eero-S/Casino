@@ -6,11 +6,11 @@ class Board(var cards: Buffer[Card]) {
 
   override def toString = if (cards.length == 0) "The board is empty" else cards.mkString(", ")
 
-  // Add card to board.
+  // Adds card to board.
   def add(card: Card) = {
     cards += card
   }
-  // Remove cards from board
+  // Removes cards from board.
   def take(c: Seq[Card]) = {
     cards --= c
   }

@@ -1,0 +1,9 @@
+package kasinoPackage
+
+class Card(val valueHand: Int, val valueTable: Int, val suit: String, val name: String, val points: Int) {
+  override def toString = {
+    if(valueTable >= 10){
+    suit.head.toLower + valueTable.toString() 
+    }
+  }
+}

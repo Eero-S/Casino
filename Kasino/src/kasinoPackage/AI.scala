@@ -5,12 +5,12 @@ class AI(hand: Buffer[Card], name: String, game: Game) extends Player(hand, name
 
   override def isBot = true
   
-  override def play() = {
-    println(this.hand)
+  override def play(): Unit = {
+    
     val card = this.bestValue._1
     val set = this.bestValue._2.toBuffer
-    val a = this.chooseAction(card, set)
-    println(a)
+    this.chooseAction(card, set)
+    
   }
   
   def bestValue: (Card, Set[Card]) = {    
@@ -39,7 +39,7 @@ class AI(hand: Buffer[Card], name: String, game: Game) extends Player(hand, name
   
   // Helps to assemble results.
   def bestValueHelper(card: Card): Option[Set[Card]] = {
-    val possibleSets = inspectSets(card)
+    val possibleSets = this.inspectSets(card)
     if (possibleSets.isEmpty) {
       None
     } else {

@@ -1,0 +1,35 @@
+package kasinoPackage
+import processing.core._
+import scala.collection.mutable.Buffer
+import scala.io.StdIn.{ readLine, readInt }
+
+class asd extends PApplet {
+
+  override def settings() = {
+    size(1500, 950);
+  }
+
+  override def setup() = {
+  }
+  
+  val game = Game
+  game.createPlayers(2, Buffer("a", "b"))
+
+  override def draw() = {
+      
+    val winner = game.winner
+    background(220)
+    textAlign(PConstants.CENTER)
+    textSize(55)
+    fill(255,0,0)
+    text("Game Over", width/2, height/2)
+    text("The winner is " + winner + "!!!", width/2 - 200, height/2)
+      
+  }
+  
+
+}
+
+object asd extends App {
+  PApplet.main("kasinoPackage.asd")
+}

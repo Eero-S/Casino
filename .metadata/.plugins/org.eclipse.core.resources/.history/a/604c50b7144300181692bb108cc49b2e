@@ -1,0 +1,6 @@
+package kasinoPackage
+import scala.collection.mutable.Buffer
+
+class AI(a: Buffer[Card], b: Board, c: String) extends Player(a,b,c){
+  
+}

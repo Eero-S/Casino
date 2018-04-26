@@ -1,0 +1,58 @@
+package kasinoPackage
+import scala.collection.mutable.Buffer
+
+class AI(hand: Buffer[Card], board: Board, name: String) extends Player(hand, board, name) {
+
+  def bestValue = {
+    val h = this.hand
+    var options = Map[Card, Option[Set[Card]]]()
+    for (i <- h.indices) {
+      val a = bestValueHelper(h(i))
+      options = options ++ Map(h(i) -> a)
+    }
+    options
+  }
+
+  // Helps to assemble results
+  def bestValueHelper(card: Card): Option[Set[Card]] = {
+    val sets = inspectSets(card)
+    if (sets.isEmpty) {
+      None
+    } else {
+      val g = sets.get
+      val a = g.flatten.toSet
+      val r = bestFromSets(a, card.valueHand, Set())
+      Some(r)
+    }
+  }
+
+  // Returns the set with best value.
+  def bestFromSets(cards: Set[Card], targ: Int, currentSet: Set[Card]): Set[Card] = {
+    val subs = cards.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == targ).distinct
+    if (subs.isEmpty) {
+      currentSet
+    } else {
+      var old = currentSet
+      for (i <- subs.indices) {
+        val eka = subs(i).toSet
+        val uudet = cards -- eka
+        val n = bestFromSets(uudet, targ, currentSet ++ eka)
+        val pointsOld = old.map(_.points).sum
+        val pointsNew = n.map(_.points).sum
+        val oldLength = old.size
+        val newLength = n.size
+        val oldSpades = old.map(_.suit == "Spades").size
+        val newSpades = n.map(_.suit == "Spades").size
+        if (pointsNew > pointsOld) {
+          old = n
+        } else if (pointsNew == pointsOld) {
+          if (newLength > oldLength || newSpades > oldSpades) {
+            old = n
+          }
+        }
+      }
+      old
+    }
+  }
+
+}

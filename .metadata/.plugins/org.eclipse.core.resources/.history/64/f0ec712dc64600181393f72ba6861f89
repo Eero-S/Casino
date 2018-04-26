@@ -1,0 +1,46 @@
+package kasinoPackage
+import processing.core._
+import scala.collection.mutable.Buffer
+import scala.io.StdIn.{ readLine, readInt }
+
+class tests extends PApplet {
+  override def settings() {
+    size(1024, 768)
+  }
+
+  val ga = Game
+  ga.createDeck
+
+  var kuvat = Map[String, PImage]()
+  var k = Buffer[PImage]()
+  override def setup() = {
+    
+      k += loadImage("Classic/c01.png")
+      
+      for(i <- 1 to 13){
+        if(i < 10){
+        kuvat = kuvat ++ Map("c0"+i.toString() -> loadImage("Modern/c0"+i+".png"))
+        } else {
+          kuvat = kuvat ++ Map("c"+i.toString() -> loadImage("Modern/c"+i+".png"))
+        }
+      }
+    
+    
+  }
+  
+
+  class kortti(val card: Card) {
+    val str = card.toString()
+  }
+
+  override def draw() {
+    fill(0)
+    image(kuvat("c11"), width/2, height/2, 100, 140)
+
+  }
+
+}
+
+object tests extends App {
+  PApplet.main("kasinoPackage.tests")
+}

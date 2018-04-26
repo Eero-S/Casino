@@ -4,7 +4,7 @@ import scala.io.StdIn._
 
 // Represents the player objects in the game.
 class Player(var hand: Buffer[Card],  val name: String, val game: Game) {
-  val board = this.game.board
+   val board = this.game.board
 
   require((hand.size <= 4 && hand.size >= 0), "Wrong hand size")
 
@@ -26,7 +26,7 @@ class Player(var hand: Buffer[Card],  val name: String, val game: Game) {
   def addPointCards = points += calcPointCards
 
   // Helper method that tells what kind of sets can be taken from the board with a certain card.
-  def inspectSets(target: Card): Option[Seq[Seq[Card]]] = {
+   def inspectSets(target: Card): Option[Seq[Seq[Card]]] = {
     val board = this.board.cards
     val targ = target.valueHand
     val sopivat = board.filter(_.valueTable <= targ).toSet
@@ -39,7 +39,7 @@ class Player(var hand: Buffer[Card],  val name: String, val game: Game) {
    * @param acandidates		Candidate cards that are smaller than the target.
    * @param targ					The hand value of the target card.
    */
-  def legalityHelper(candidates: Seq[Card], targ: Int): Boolean = {
+  private def legalityHelper(candidates: Seq[Card], targ: Int): Boolean = {
     require(candidates.forall(_.valueTable < targ), "Cards are too big")
     val subs = candidates.toSet.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == targ).distinct // subsets that equal the target.
     val allThere = candidates.forall(subs.flatten.contains(_)) // Checks if every candidate is being used in the subsets.
@@ -65,7 +65,7 @@ class Player(var hand: Buffer[Card],  val name: String, val game: Game) {
    * @param card				The card to be played.
    * @param candidates 	The cards to be taken.
    */
-  def legality(target: Card, candidates: Seq[Card]): Boolean = {
+  private def legality(target: Card, candidates: Seq[Card]): Boolean = {
     val smaller = candidates.filter(_.valueTable < target.valueHand) //  Cards that are smaller than target card.
     val subs = smaller.toSet.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == target.valueHand).distinct // subsets that equal the target.
 
@@ -98,7 +98,7 @@ class Player(var hand: Buffer[Card],  val name: String, val game: Game) {
         this.collect(cardsToBeTaken)
         this.game.lastTaken = this
 
-        // Mökki
+        // Mökki: If a player takes every card from the table.
         if (this.board.cards.isEmpty) {
           points += 1
         }

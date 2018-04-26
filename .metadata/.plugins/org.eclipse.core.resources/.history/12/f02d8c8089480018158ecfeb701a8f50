@@ -1,0 +1,81 @@
+package kasinoPackage
+import scala.collection.mutable.Buffer
+
+class AI(hand: Buffer[Card], name: String, game: Game) extends Player(hand, name, game) {
+
+  override def isBot = true
+  
+  override def play() = {
+    println(this.hand)
+    val card = this.bestValue._1
+    val set = this.bestValue._2.toBuffer
+    val a = this.chooseAction(card, set)
+    println(a)
+  }
+  
+  def bestValue: (Card, Set[Card]) = {    
+    var options = Map[Card, Option[Set[Card]]]()
+    // Assign best outcome for each card in hand.
+    for (i <- hand.indices) {
+      val bestToTake = bestValueHelper(hand(i))
+      options = options ++ Map(hand(i) -> bestToTake)
+    }
+    // Get the best card to play.
+    
+    val nonesFiltered = options.filter(!_._2.isEmpty)
+    if(nonesFiltered.isEmpty){ // Can'n get anything with any card.
+      val noPointCards = options.filter(_._1.points == 0)
+      if(!noPointCards.isEmpty){
+        ( noPointCards.head._1, Set() )
+      } else {
+        ( options.minBy(_._1.valueHand)._1, Set() )
+      }
+    } else {
+    val aa = nonesFiltered.mapValues(_.get)
+    val b = aa.maxBy(_._2.map(_.points).sum)
+    b
+    }
+  }
+  
+  // Helps to assemble results.
+  def bestValueHelper(card: Card): Option[Set[Card]] = {
+    val possibleSets = inspectSets(card)
+    if (possibleSets.isEmpty) {
+      None
+    } else {
+      val sets = possibleSets.get
+      val cardsInSets = sets.flatten.toSet
+      val r = bestFromSets(cardsInSets, card.valueHand, Set())
+      Some(r)
+    }
+  }
+  // Returns the set with best value.
+  def bestFromSets(cards: Set[Card], targ: Int, currentSet: Set[Card]): Set[Card] = {
+    val subs = cards.subsets().toList.map(_.toSeq).filter(_.map(_.valueTable).sum == targ).distinct
+    if (subs.isEmpty) {
+      currentSet
+    } else {
+      var old = currentSet
+      for (i <- subs.indices) {
+        val eka = subs(i).toSet
+        val uudet = cards -- eka
+        val n = bestFromSets(uudet, targ, currentSet ++ eka)
+        val pointsOld = old.map(_.points).sum
+        val pointsNew = n.map(_.points).sum
+        val oldLength = old.size
+        val newLength = n.size
+        val oldSpades = old.map(_.suit == "Spades").size
+        val newSpades = n.map(_.suit == "Spades").size
+        if (pointsNew > pointsOld) {
+          old = n
+        } else if (pointsNew == pointsOld) {
+          if (newLength > oldLength || newSpades > oldSpades) {
+            old = n
+          }
+        }
+      }
+      old
+    }
+  }
+
+}

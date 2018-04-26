@@ -1,0 +1,28 @@
+package kasinoPackage
+import processing.core._
+import scala.io.StdIn.{ readLine, readInt }
+
+class tests extends PApplet {
+  override def settings() {
+    size(1024, 768)
+  }
+
+  override def setup() = {
+  }
+
+ 
+  override def draw() {
+
+   for(i <- 0 until 5){
+     
+   }
+    
+  }
+
+  
+
+}
+
+object tests extends App {
+  PApplet.main("kasinoPackage.tests")
+}

@@ -1,0 +1,39 @@
+package kasinoPackage
+import processing.core._
+import scala.collection.mutable.Buffer
+import scala.io.StdIn.{ readLine, readInt }
+
+class asd extends PApplet {
+
+  override def settings() = {
+    size(1500, 950);
+  }
+
+  override def setup() = {
+  }
+  
+  val game = Game
+  game.createPlayers(2, Buffer("a", "b"))
+
+  override def draw() = {
+      
+    
+      
+      textSize(46)
+      textAlign(PConstants.CENTER)
+      for(i <- 0 until game.players.size){
+        val x = width/2
+        val y = height/2 - i * 150
+        val input = "Player: " + game.players(i).name + " Points: " +game.players(i).points
+        fill(0)
+        text(input, x, y )
+      }
+    }
+      
+  
+
+}
+
+object asd extends App {
+  PApplet.main("kasinoPackage.asd")
+}

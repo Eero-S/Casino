@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;Kasino/src/kasinoPackage/ProcessingTest.scala&apos; to &apos;UI.scala&apos;" description="Rename resource &apos;ProcessingTest.scala&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/kasinoPackage/ProcessingTest.scala" name="UI.scala" stamp="1524423565465" updateReferences="true"/>
+</session>

@@ -1,0 +1,426 @@
+package kasinoPackage
+import processing.core._
+import scala.collection.mutable.Buffer
+
+class UI extends PApplet {
+  // Initiate game
+  val game = Game
+  game.createDeck
+
+  override def settings() = {
+    size(1500, 950)
+  }
+
+  override def setup() = {
+
+    // CARDS BEGIN
+    val spritesheet: PImage = loadImage("sheet1.png");
+    val dimX = 13;
+    val dimY = 4
+    imageMode(PConstants.CENTER);
+    val W = spritesheet.width / dimX;
+    val H = spritesheet.height / dimY;
+    var counter = 0
+    for (i <- 0 until 52) {
+      val x = i % dimX * W;
+      val y = i / 13 * H;
+      sprites += spritesheet.get(x, y, W, H);
+    }
+    // CARDS END
+  }
+
+  // CARDS
+  var sprites = Buffer[PImage]()
+  var selectedBoard = Buffer[Boolean]()
+  for (i <- 0 until 20) {
+    selectedBoard += false
+  }
+  var selectedHand = Buffer[Boolean](false, false, false, false)
+  // CARDS END
+
+  var state = 0
+  var playerNtext = ""
+  var alert = false
+  var alert2 = false
+  var amountOfPlayers = 0
+  var playerNames = Buffer[String]()
+  var currentName = ""
+  var botAmount = 0
+  var botNtext = ""
+
+  def overRect(x: Float, y: Float, width: Float, height: Float): Boolean = {
+    if (mouseX > (x - width / 2F) && mouseX < (x + width / 2F) && mouseY > (y - height / 2F) && mouseY < (y + height / 2F)) {
+      true;
+    } else {
+      false;
+    }
+  }
+
+  class Button(val text: String, go: => Unit) {
+    def getGo = go
+  }
+
+  // Works only on state 1 and 2
+  override def keyPressed() = {
+    if (state == 1) {
+      if ( (playerNtext.size == 1 && key != 8 && key != 10) || (key > 5 && key < 10) ) {
+        alert = true
+      } else if (!key.isDigit && key != 8 && key != 10) {
+        alert2 = true
+      } else {
+        if (key == 10) {
+          if (!playerNtext.isEmpty()) {
+            amountOfPlayers = playerNtext.toInt
+            state += 1
+          }
+        } else if (key == 8) {
+          if (playerNtext.length != 0) {
+            playerNtext = playerNtext.init
+          }
+        } else if (key == 48) {
+          alert = true
+        } else {
+          playerNtext = playerNtext + key
+        }
+      }
+    } else if (state == 7) {
+      if ((botNtext.size == 1 && key != 8 && key != 10)) {
+        alert = true
+      } else if (!key.isDigit && key != 8 && key != 10) {
+        alert2 = true
+      } else {
+        if (key == 10) {
+          if (!botNtext.isEmpty()) {
+            botAmount = botNtext.toInt
+            state = 1
+          }
+        } else if (key == 8) {
+          if (botNtext.length != 0) {
+            botNtext = botNtext.init
+          }
+        } else if (key == 48) {
+          alert = true
+        } else {
+          botNtext = botNtext + key
+        }
+      }     
+
+    } else if (state == 2) {
+      if (key == PConstants.ENTER) {
+        playerNames += currentName
+        currentName = ""
+      } else if (key == PConstants.BACKSPACE) {
+        currentName = currentName.init
+      } else {
+        currentName = currentName + key
+      }
+    } else if (state == 4) {
+      if (key == 32) {
+        state = 3
+      }
+    } else if (state == 5) {
+      if (key == 32) {
+        game.resetGame()
+        state = 3
+      }
+    }
+  }
+
+  def cardBuilderBoard(cards: Buffer[Card], y: Int) = {
+    imageMode(PConstants.CENTER);
+    rectMode(PConstants.CENTER)
+    for (i <- cards.indices) {
+      // Coordinates & size
+      val x = width / 2 - cards.length / 2 * 110 + (i) * 110
+      val w = 100
+      val h = 150
+      strokeWeight(5)
+      stroke(220);
+      rect(x, y, w, h)
+      image(sprites(cards(i).picIndex), x, y, w, h);
+      if (selectedBoard(i)) {
+        strokeWeight(5)
+        stroke(204, 102, 0);
+        rect(x, y, w, h)
+        image(sprites(cards(i).picIndex), x, y, w, h);
+      }
+      if (overRect(x, y, w, h) && mousePressed && !selectedBoard(i) && mouseButton == PConstants.LEFT) {
+        selectedBoard(i) = true
+      } else if (overRect(x, y, w, h) && mousePressed && selectedBoard(i) && mouseButton == PConstants.RIGHT) {
+        selectedBoard(i) = false
+      }
+
+    }
+  }
+
+  def cardBuilderPlayer(p: Player, y: Int) = {
+    imageMode(PConstants.CENTER);
+    rectMode(PConstants.CENTER)
+    textAlign(PConstants.CENTER, PConstants.CENTER)
+    textSize(40)
+
+    text(p.name + "'s turn", 250, height - 300)
+
+    // Buttons
+    val bx = width - width / 5F
+    val by = height - height / 10F
+    val bw = width / 5F
+    val bh = height / 10F
+    noStroke()
+    fill(220, 220, 220)
+    stroke(100)
+    strokeWeight(3)
+    rect(bx, by, bw, bh - 20)
+    fill(0)
+    text("Play card", bx, by, bw, bh)
+    if (overRect(bx, by, bw, bh - 20)) {
+      stroke(255, 0, 0)
+      strokeWeight(3)
+      fill(220, 220, 220)
+      rect(bx, by, bw, bh - 20)
+      fill(0)
+      text("Play card", bx, by, bw, bh)
+      if (mousePressed && mouseButton == PConstants.LEFT) {
+
+        if (selectedHand.count(_ == true) == 1) {
+          val fromBoard: Buffer[Card] = Buffer()
+          val a = selectedBoard.zipWithIndex.filter(_._1 == true).map(_._2)
+          for (i <- 0 until a.length) {
+            fromBoard += p.board.cards(a(i))
+          }
+          val asd = p.chooseAction(p.hand(selectedHand.indexOf(true)), fromBoard)
+          selectedBoard = selectedBoard.map(a => false)
+          selectedHand = selectedHand.map(a => false)
+
+          if (asd) {
+
+            game.gameHandler()
+
+            if (!fromBoard.isEmpty) {
+              game.lastTaken = p
+              println(game.lastTaken.name)
+            }
+          }
+
+        } else {
+          // TODO Give error message for n amount of time...
+        }
+      }
+    }
+    // Buttons end
+
+    // CARDS
+    for (i <- p.hand.indices) {
+      val x = width / 2 + 50 - p.hand.length / 2 * 110 + (i) * 110
+      val w = 100
+      val h = 150
+      strokeWeight(5)
+      stroke(220);
+      rect(x, y, w, h)
+      image(sprites(p.hand(i).picIndex), x, y, w, h);
+
+      if (selectedHand(i)) {
+        strokeWeight(5)
+        stroke(204, 102, 0);
+        rect(x, y, w, h)
+        image(sprites(p.hand(i).picIndex), x, y, w, h);
+      }
+      if (overRect(x, y, w, h) && mousePressed && !selectedHand(i) && mouseButton == PConstants.LEFT) {
+        selectedHand = selectedHand.map(a => false)
+        selectedHand(i) = true
+      } else if (overRect(x, y, w, h) && mousePressed && selectedHand(i) && mouseButton == PConstants.RIGHT) {
+        selectedHand(i) = false
+      }
+
+    }
+  }
+
+  override def draw() = {
+    val Bwidth = width / 3F
+    val Bheight = height / 7F
+    val Bx = width / 2F
+    val yBase = height / 3F
+    val yMargin = 150
+
+    state match {
+      case 0 => stateMenu()
+      case 1 => stateAmountOfPlayers()
+      case 2 => stateNamePlayers()
+      case 3 => stateGame()
+      case 4 => stateRoundOver()
+      case 5 => stateGameOver()
+      case 6 => stateBots()
+      case 7 => stateBotAmount()
+    }
+
+    def stateBots() = {
+      background(255, 250, 250)
+      textAlign(PConstants.CENTER, PConstants.CENTER)
+      rectMode(PConstants.CENTER)
+      textSize(46);      
+      fill(0)
+      text("Do you want to play with bots?", width / 2, 100)
+      
+      rect(width/2, height/2, 200, 100)
+      
+      rect(width/2, height/2 + 200, 200, 100)
+      
+    }
+
+    def stateBotAmount() = {
+      background(255)
+      textSize(31)
+      rectMode(PConstants.CENTER)
+      fill(0)
+      line(width / 2F - 20, 400, width / 2F + 20, 400)
+      text("Enter the number of bots. Press ENTER to continue.", width / 2F, height / 3F, 600, 500);
+      text(botNtext, width / 2F, 385)
+      textSize(21)
+      text("You can have a maximum of 3 bots", width / 2F + 370, 390)
+    }
+
+    def stateMenu() = {
+      background(255, 250, 250)
+      textAlign(PConstants.CENTER, PConstants.CENTER)
+      rectMode(PConstants.CENTER)
+      textSize(46);
+      val buttons = Buffer[Button]()
+      buttons += new Button("Play", state = 7)
+      buttons += new Button("Exit", exit())
+      buttonBuilder(buttons)
+    }
+    def stateNamePlayers() = {
+      if (playerNames.size == amountOfPlayers) {
+        state += 1
+        game.createPlayers(amountOfPlayers, playerNames)
+
+      } else {
+        background(255)
+        textSize(31)
+        rectMode(PConstants.CENTER)
+        fill(0)
+        line(width / 2F - 40, 400, width / 2F + 40, 400)
+        text("Enter the names of players. Press ENTER to continue.", width / 2F, height / 3F, 600, 500);
+        text("Player:" + (playerNames.size + 1), width / 2F - 270, 390)
+        text(currentName, width / 2F, 385)
+      }
+    }
+
+    def stateAmountOfPlayers() = {
+      background(255)
+      textSize(31)
+      rectMode(PConstants.CENTER)
+      fill(0)
+      line(width / 2F - 20, 400, width / 2F + 20, 400)
+      text("Enter the number of players. Press ENTER to continue.", width / 2F, height / 3F, 600, 500);
+      text(playerNtext, width / 2F, 385)
+      textSize(21)
+      text("Must be between 1 and 5.", width / 2F + 170, 390)
+      if (alert) {
+        fill(255, 2, 2);
+        textSize(45)
+        text("You can only enter numbers from 1 to 5!", width / 2F, 633);
+      }
+      if (alert2) {
+        fill(255, 2, 2);
+        textSize(45)
+        text("You can only enter numbers!", width / 2F, 533);
+      }
+    }
+
+    def stateGame() = {
+      if (game.gameOver) {
+        state = 5
+      }
+      if (game.roundOver) {
+        game.roundFinish()
+        state = 4
+      }
+      background(220, 220, 220)
+      fill(0, 100, 0)
+      stroke(139, 69, 19)
+      strokeWeight(4)
+      ellipse(width / 2F, height / 3F, width - width / 16, 600)
+      val asd = game.board.cards
+      cardBuilderBoard(asd, height / 2 - 270)
+      val nextPlayer = game.turn.head
+      cardBuilderPlayer(nextPlayer, height / 2 - 30)
+    }
+
+    def stateRoundOver() = {
+      background(250)
+      textSize(55)
+      textAlign(PConstants.CENTER)
+      for (i <- 0 until game.players.size) {
+        val x = width / 2
+        val y = height / 2 - i * 150
+        val input = "Player: " + game.players(i).name + "    Points: " + game.players(i).points
+        fill(0)
+        text(input, x, y)
+      }
+      text("Hit space to continue to the next round.", width / 2, height - height / 4)
+    }
+
+    def stateGameOver() = {
+      val winner = game.winner
+      background(0)
+      textAlign(PConstants.CENTER)
+      textSize(90)
+      fill(255, 0, 0)
+      text("Game Over!", width / 2, height / 2 - 200)
+      fill(255, 215, 0)
+      text("The winner is " + winner.name + "!!!", width / 2, height / 2)
+      text("Hit space to start over", width / 2, height - height / 4)
+    }
+
+    // Helper for building buttons
+    def buttonBuilder(btns: Buffer[Button]) = {
+      for (i <- btns.indices) {
+        // Coordinates & size
+        val x = Bx
+        val y = yBase + (i) * yMargin
+        val w = Bwidth
+        val h = Bheight
+        // TODO copy to bots N
+        // Rectangle & text
+        stroke(0)
+        strokeWeight(3)
+        fill(220, 220, 220)
+        rect(x, y, w, h)
+        fill(0)
+        text(btns(i).text, x, y, w, h)
+
+        if (overRect(x, y, w, h)) {
+          rect(x, y, w, h)
+          fill(220, 220, 220)
+          text(btns(i).text, x, y, w, h)
+          if (mousePressed) {
+            btns(i).getGo
+          }
+        }
+
+      }
+    }
+
+  }
+}
+
+object ProcessingTest extends App {
+  PApplet.main("kasinoPackage.UI")
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
