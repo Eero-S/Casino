@@ -6,11 +6,15 @@ class AI(hand: Buffer[Card], name: String, game: Game) extends Player(hand, name
   override def isBot = true
   
   override def play(): Unit = {
-    
+    println("\n" * 5)
+    val käsi = this.hand
+    println("Käsi: " + käsi.mkString(", "))
+    println("Pöytä " + this.game.board)
     val card = this.bestValue._1
     val set = this.bestValue._2.toBuffer
     this.chooseAction(card, set)
-    
+    println("Pelattu kortti: " + card)
+    println("Otettu pöydästä " + set.mkString(", "))
   }
   
   def bestValue: (Card, Set[Card]) = {    

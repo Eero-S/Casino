@@ -248,7 +248,10 @@ class UI extends PApplet {
     }
   }
 
+  var flag = false
+  
   override def draw() = {
+    frame.setLocation(100, 500)
     val Bwidth = width / 3F
     val Bheight = height / 7F
     val Bx = width / 2F
@@ -267,6 +270,10 @@ class UI extends PApplet {
     }
     // STATE 0
     def stateMenu() = {
+      if(!flag){
+      frame.setLocation(100, 100)
+      flag = true
+      }
       background(255, 250, 250)
       textAlign(PConstants.CENTER, PConstants.CENTER)
       rectMode(PConstants.CENTER)
